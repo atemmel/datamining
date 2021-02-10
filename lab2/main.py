@@ -4,7 +4,7 @@ from six import StringIO
 from scipy.io import arff
 from sklearn.tree import DecisionTreeClassifier, export_text, export_graphviz
 from IPython.display import Image
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_curve
 from sklearn.naive_bayes import CategoricalNB
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -86,6 +86,7 @@ def perform_bayes(df):
     model.fit(x_train, y_train.values.ravel())
 
     y_pred = model.predict(x_test)
+    y_pred_probability = model.predict_proba(x_test)[::, 1]
 
     accuracy = accuracy_score(y_test, y_pred) * 100
     print(accuracy)
@@ -107,6 +108,14 @@ def perform_bayes(df):
     y = les[-1].inverse_transform(y)[0]
     print(y)
 
+    a, b, _ = roc_curve(y_test, y_pred_probability)
+    plt.plot(a, b, label="accuracy="+str(accuracy))
+    plt.xlabel("false positive rate")
+    plt.ylabel("true positive rate")
+    plt.axis
+    plt.legend(loc=4)
+    plt.show()
+
 filedata = arff.loadarff('./breast-cancer.arff')
 
 df = pd.DataFrame(filedata[0])
@@ -119,7 +128,7 @@ data, target, feature_names, class_names = create_tree_using_onehotencoders(df)
 
 x_train, x_test, y_train, y_test = train_test_split(data, target, train_size=0.25, random_state=10)
 
-decision_tree = DecisionTreeClassifier(random_state=0)
+decision_tree = DecisionTreeClassifier(random_state=0, criterion="entropy")
 path = decision_tree.cost_complexity_pruning_path(x_train, y_train)
 ccp_alphas, impurities = path.ccp_alphas, path.impurities
 
