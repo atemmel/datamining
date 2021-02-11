@@ -4,7 +4,7 @@ from six import StringIO
 from scipy.io import arff
 from sklearn.tree import DecisionTreeClassifier, export_text, export_graphviz
 from IPython.display import Image
-from sklearn.metrics import accuracy_score, roc_curve
+from sklearn.metrics import accuracy_score, roc_curve, roc_auc_score, plot_confusion_matrix
 from sklearn.naive_bayes import CategoricalNB
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -109,11 +109,13 @@ def perform_bayes(df):
     print(y)
 
     a, b, _ = roc_curve(y_test, y_pred_probability)
-    plt.plot(a, b, label="accuracy="+str(accuracy))
+    area_under_curve = roc_auc_score(y_test, y_pred_probability)
+    plt.plot(a, b, label="area under curve="+str(area_under_curve))
     plt.xlabel("false positive rate")
     plt.ylabel("true positive rate")
     plt.axis
     plt.legend(loc=4)
+    plot_confusion_matrix(model, x_train, y_train.values.ravel(), normalize='true', display_labels=les[-1].inverse_transform([0, 1]))
     plt.show()
 
 filedata = arff.loadarff('./breast-cancer.arff')

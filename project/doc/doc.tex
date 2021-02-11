@@ -1,0 +1,34 @@
+\documentclass[a4paper, titlepage,12pt]{article}
+\usepackage[margin=3.7cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[swedish,english]{babel}
+\usepackage{csquotes}
+\usepackage[hyphens]{url}
+\usepackage{amsmath,amssymb,amsthm, amsfonts}
+\usepackage[backend=biber,citestyle=ieee]{biblatex}
+\usepackage[yyyymmdd]{datetime}
+
+\addbibresource{literature.bib}
+
+\title{Title
+\large Course code}
+\author{Adam Temmel (adte1700),}
+
+\begin{document}
+	\maketitle
+	\section{Introduction}\label{sec:introduction}
+		\textit{Dota 2} is a team based strategy game that is infamous for its relative complexity compared to competing titles. In this game two teams of five players are pitted against each other in a very peculiar arena with several different minor objectives and one major objective; destroying the base of the enemy team. The first team to destroy the enemy base is crowned as the winner, but this requires that the players have a good understanding of the game and even better teamwork. A defining characteristic of the title is the usage of \textit{heroes}. Each player must choose a hero to play as. This sums up to a total of 10 heroes that end up being played each match. Choosing your hero is a quintessential aspect of playing the game effectively, as certain heroes are generally considered better than others in certain scenarios. Therefore, picking a hero that generally underperforms in most situations is usually a bad choice. Naturally every hero has their place in the game, but some end up being more flexible than others.
+	\section{Problem description}\label{sec:problem}
+		The authors of this project proposal enjoy playing Dota 2, but (most of them) are moderately bad at the game. Therefore, they believe that by mining data from a large dataset of games played, they perhaps might be able to get a better understanding of what heroes to pick. In particular the following topics are things they wish to study:
+		\begin{itemize}
+			\item Which hero is the \textit{best}, in terms of total winrate? (Games won/Games played)
+				% Måste diskutera attribute i introduction
+			\item Which hero from each attribute is the \textit{best}, in terms of total winrate?
+			\item Create a model which, upon inputing the chosen heroes of two teams, predicts which team is most likely to win, based upon hero choices alone.
+		\end{itemize}
+	\section{Preprocessing techniques}
+	\section{Datamining techniques}
+	\section{Evalutation}
+	\printbibliography
+\end{document}
