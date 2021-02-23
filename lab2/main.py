@@ -179,6 +179,9 @@ plt.show()
 
 decision_tree = decision_tree.fit(x_train, y_train)
 
+plot_confusion_matrix(decision_tree, x_test, y_test.values.ravel(), display_labels=class_names)
+plt.show()
+
 #r = export_text(decision_tree, feature_names)
 #print(r)
 
@@ -196,4 +199,25 @@ graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
 graph.write_png("big_tree.png")
 Image(graph.create_png())
 
-perform_bayes(df)
+
+# extracted from graph
+"""
+decision_tree.ccp_alpha = 0.04
+decision_tree = decision_tree.fit(x_train, y_train)
+
+dot_data = StringIO()
+
+export_graphviz(decision_tree, 
+        out_file=dot_data,
+        filled=True,
+        rounded=True,
+        special_characters=True,
+        feature_names=feature_names,
+        class_names=class_names)
+
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+graph.write_png("not_asbig_tree.png")
+Image(graph.create_png())
+"""
+
+#perform_bayes(df)
