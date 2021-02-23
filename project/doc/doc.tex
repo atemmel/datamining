@@ -12,7 +12,7 @@
 \addbibresource{literature.bib}
 
 \title{Project proposal}
-\author{Adam Temmel (adte1700)\\ Fredik Sellgren (frse1700)\\Isak Kjellhard (iskj1700)}
+\author{Adam Temmel (adte1700)\\ Fredrik Sellgren (frse1700)\\Isak Kjellhard (iskj1700)}
 
 \begin{document}
 	\maketitle
@@ -33,6 +33,7 @@
 			\item \textit{Game Mode} The mode under which the game was played in, such as all pick.
 			\item \textit{Game Type} The type of game that was played, such as ranked.
 			\item \textit{Heroes} The remaining columns 4 to 116 represent the presence of a hero within the match. If the value is $1$, the hero was present on Team $1$. If the value is $-1$, the hero was instead present on Team $-1$. Otherwise the value is $0$, meaning the hero was not present in the match.
+			\item \textit{Sum of attributes} As previously stated, each hero belongs to one of three different attributes. It is therefore of interest to insert this information about the team composition into the dataset, in order to properly measure how different combinations of attributes can impact the game.
 		\end{itemize}
 		The first column of the dataset is reserved for the class, which states which of the two teams that won the match. This column exclusively consists of $-1$ and $1$ values, as only one team can win at a time.
 
@@ -50,6 +51,6 @@
 			\item Naive Bayes
 		\end{itemize}
 	\section{Evaluation}
-		For all models used, a measurement of accuracy  between the predicted classifications of the test data and the actual classifications of the test data can be extracted. Likewise, a confusion matrix and an ROC curve can be created for each model in order to properly compare them with each other.
+		For all models used, a measurement of accuracy  between the predicted classifications of the test data and the actual classifications of the test data will be extracted using a confusion matrix. A ROC curve will also be created for each model in order to properly compare them with each other. As a final evaluation method, cross-validation will also be performed for each model created.
 	\printbibliography
 \end{document}
