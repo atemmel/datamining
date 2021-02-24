@@ -10,7 +10,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import json
 
+from sklearn import preprocessing
 from tensorflow.keras import layers
+from sklearn.model_selection import train_test_split
 
 end = time.time()
 print("Took", end-start, "seconds to import")
@@ -67,8 +69,9 @@ def create_model_deep(my_learning_rate, my_feature_layer):
                                   name='Output'))                              
   
   model.compile(optimizer=tf.keras.optimizers.Adam(lr=my_learning_rate),
-                loss="mean_squared_error",
-                metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.Accuracy()])
+                loss="mse",
+                loss_weights=0.2,
+                metrics=["accuracy"])
 
   return model
 
@@ -102,16 +105,16 @@ def plot_the_loss_curve(epochs, mse):
   plt.ylim([mse.min()*0.95, mse.max() * 1.03])
   plt.show()
 
-def plot_the_acc_curve(epohcs, acc):
+def plot_the_acc_curve(epochs, acc):
   """Plot a curve of acc vs. epoch."""
 
   plt.figure()
   plt.xlabel("Epoch")
   plt.ylabel("Accuracy")
 
-  plt.plot(epochs, mse, label="Gain in accuracy")
+  plt.plot(epochs, acc, label="Gain in accuracy")
   plt.legend()
-  plt.ylim([mse.min()*0.95, mse.max() * 1.03])
+  plt.ylim([acc.min()*0.95, acc.max() * 1.03])
   plt.show()
 
 def train_model_deep(model, dataset, epochs, label_name,
@@ -130,84 +133,46 @@ def train_model_deep(model, dataset, epochs, label_name,
   # To track the progression of training, gather a snapshot
   # of the model's mean squared error at each epoch. 
   hist = pd.DataFrame(history.history)
-  print(hist)
-  mse = hist["mean_squared_error"]
+  mse = hist["loss"]
   acc = hist["accuracy"]
 
   return epochs, mse, acc
 
-def create_id_hero_mapping(jsondict):
-    mapping = dict()
-    inner = jsondict["heroes"]
-    for i in inner:
-        mapping[i["id"]] = i["name"]
-    return mapping
+df = pd.read_csv("./Star3642_balanced.csv")
 
-def cull_dataframe(df):
-    return pd.DataFrame(df.iloc[:, 0]).join(df.iloc[:, 4:])
+# shuffle data
+#df = df.reindex(np.random.permutation(df.index))
 
-def insert_labels(df, id_to_hero):
-    cols = ["WL", "Cluster ID", "Mode", "Type"]
-    delta = len(df.columns) -len(cols)
-    for col in range(1, delta + 1):
-        try:
-            my_hero = id_to_hero[col]
-            cols.append(my_hero)
-        except KeyError:
-            cols.append("Unused")
-    df.columns = cols
-    del df["Unused"]
-    return df
+x = df.iloc[:, :-1]
+y = df.iloc[:, -1]
 
-def preprocess_df(df, id_to_hero):
-    df = insert_labels(df, id_to_hero)
-    df = cull_dataframe(df)
-    return df
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.15, random_state=10)
 
-train_df = pd.read_csv("./dota2Train.csv")
-test_df = pd.read_csv("./dota2Test.csv")
+train_df = pd.DataFrame(x_train).join(y_train)
+test_df = pd.DataFrame(x_test).join(y_test)
 
-with open("./heroes.json") as f:
-    data = json.load(f)
-
-id_to_hero = create_id_hero_mapping(data)
-
-train_df = preprocess_df(train_df, id_to_hero)
-test_df = preprocess_df(test_df, id_to_hero)
-
-#train_df = do_norm(train_df)
-#test_df = do_norm(test_df)
-
-#print(train_df)
-#print()
-#print(test_df)
-
-#train_df = pd.read_csv("./california_housing_train.csv")
-#test_df = pd.read_csv("./california_housing_test.csv")
-
-#train_df = do_norm(train_df)
-#test_df = do_norm(test_df)
-
-# shuffle training data
-train_df = train_df.reindex(np.random.permutation(train_df.index))
+# Vmag,Plx,e_Plx,B-V,SpType,Amag,TargetClass
+le = preprocessing.LabelEncoder()
+all_unique = np.unique(np.concatenate((train_df["SpType"].unique(), test_df["SpType"].unique())))
+le.fit(all_unique)
+train_df["SpType"] = le.transform(train_df["SpType"])
+test_df["SpType"] = le.transform(test_df["SpType"])
 
 feature_columns = []
 
-for i in train_df.iloc[:, 1:]:
+for i in train_df.columns[:-1]:
     feature_columns.append(tf.feature_column.numeric_column(i))
 
-#feature_columns.append(tf.feature_column.numeric_column("median_income"))
-#feature_columns.append(tf.feature_column.numeric_column("population"))
-
+print(feature_columns)
 my_feature_layer = tf.keras.layers.DenseFeatures(feature_columns)
 
 # The following variables are the hyperparameters.
 learning_rate = 0.01
-epochs = 500
+epochs = 50
 batch_size = 1000
 
 # Specify the label
-label_name = "WL"
+label_name = "TargetClass"
 #label_name = "median_house_value"
 
 # Establish the model's topography.
