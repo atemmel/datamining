@@ -9,7 +9,6 @@ import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import json
-import dota
 
 from sklearn import preprocessing
 from tensorflow.keras import layers
@@ -131,9 +130,6 @@ def train_model_deep(model, dataset, epochs, label_name,
   acc = hist["accuracy"]
 
   return epochs, mse, acc
-
-train_df = pd.read_csv("./dota2Train.csv")
-test_df = pd.read_csv("./dota2Test.csv")
 
 df = pd.read_csv("./Star3642_balanced.csv")
 le = preprocessing.LabelEncoder()
