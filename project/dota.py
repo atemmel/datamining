@@ -1,3 +1,4 @@
+import pandas as pd
 
 def create_id_hero_mapping(jsondict):
     mapping = dict()

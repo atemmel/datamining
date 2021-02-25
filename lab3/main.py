@@ -9,6 +9,7 @@ import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import json
+import dota
 
 from sklearn import preprocessing
 from tensorflow.keras import layers
@@ -18,11 +19,9 @@ end = time.time()
 print("Took", end-start, "seconds to import")
 
 def do_norm(df):
-    df_mean = df.mean()
-    df_std = df.std()
-    df_norm = (df - df_mean) / df_std
-
-    return df_norm.fillna(0, axis=1)
+    scaler = preprocessing.MinMaxScaler()
+    scaled = scaler.fit_transform(df)
+    return pd.DataFrame(scaled, columns=list(df.columns))
 
 def create_model_simple(my_learning_rate, feature_layer):
   # Most simple tf.keras models are sequential.
@@ -36,8 +35,8 @@ def create_model_simple(my_learning_rate, feature_layer):
 
   # Construct the layers into a model that TensorFlow can execute.
   model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=my_learning_rate),
-                loss="mean_squared_error",
-                metrics=[tf.keras.metrics.MeanSquaredError()])
+                loss="mse",
+                metrics=["accuracy"])
 
   return model           
 
@@ -48,18 +47,10 @@ def create_model_deep(my_learning_rate, my_feature_layer):
   # Add the layer containing the feature columns to the model.
   model.add(my_feature_layer)
 
-  # Describe the topography of the model by calling the tf.keras.layers.Dense
-  # method once for each layer. We've specified the following arguments:
-  #   * units specifies the number of nodes in this layer.
-  #   * activation specifies the activation function (Rectified Linear Unit).
-  #   * name is just a string that can be useful when debugging.
-
-  # Define the first hidden layer with 20 nodes.   
   model.add(tf.keras.layers.Dense(units=50, 
                                   activation='relu', 
                                   name='Hidden1'))
   
-  # Define the second hidden layer with 12 nodes. 
   model.add(tf.keras.layers.Dense(units=25, 
                                   activation='relu', 
                                   name='Hidden2'))
@@ -70,7 +61,7 @@ def create_model_deep(my_learning_rate, my_feature_layer):
   
   model.compile(optimizer=tf.keras.optimizers.Adam(lr=my_learning_rate),
                 loss="mse",
-                loss_weights=0.2,
+                #loss_weights=0.2,
                 metrics=["accuracy"])
 
   return model
@@ -89,9 +80,11 @@ def train_model_simple(model, dataset, epochs, batch_size, label_name):
   # Get details that will be useful for plotting the loss curve.
   epochs = history.epoch
   hist = pd.DataFrame(history.history)
-  rmse = hist["mean_squared_error"]
+  #rmse = hist["loss"]
+  rmse = []
+  acc = hist["accuracy"]
 
-  return epochs, rmse
+  return epochs, rmse, acc
 
 def plot_the_loss_curve(epochs, mse):
   """Plot a curve of loss vs. epoch."""
@@ -133,15 +126,22 @@ def train_model_deep(model, dataset, epochs, label_name,
   # To track the progression of training, gather a snapshot
   # of the model's mean squared error at each epoch. 
   hist = pd.DataFrame(history.history)
-  mse = hist["loss"]
+  #mse = hist["loss"]
+  mse = []
   acc = hist["accuracy"]
 
   return epochs, mse, acc
 
-df = pd.read_csv("./Star3642_balanced.csv")
+train_df = pd.read_csv("./dota2Train.csv")
+test_df = pd.read_csv("./dota2Test.csv")
 
-# shuffle data
-#df = df.reindex(np.random.permutation(df.index))
+df = pd.read_csv("./Star3642_balanced.csv")
+le = preprocessing.LabelEncoder()
+all_unique = df["SpType"].unique()
+le.fit(all_unique)
+df["SpType"] = le.transform(df["SpType"])
+
+df = do_norm(df)
 
 x = df.iloc[:, :-1]
 y = df.iloc[:, -1]
@@ -151,19 +151,13 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.15, random
 train_df = pd.DataFrame(x_train).join(y_train)
 test_df = pd.DataFrame(x_test).join(y_test)
 
-# Vmag,Plx,e_Plx,B-V,SpType,Amag,TargetClass
-le = preprocessing.LabelEncoder()
-all_unique = np.unique(np.concatenate((train_df["SpType"].unique(), test_df["SpType"].unique())))
-le.fit(all_unique)
-train_df["SpType"] = le.transform(train_df["SpType"])
-test_df["SpType"] = le.transform(test_df["SpType"])
 
+# Vmag,Plx,e_Plx,B-V,SpType,Amag,TargetClass
 feature_columns = []
 
 for i in train_df.columns[:-1]:
-    feature_columns.append(tf.feature_column.numeric_column(i))
+   feature_columns.append(tf.feature_column.numeric_column(i))
 
-print(feature_columns)
 my_feature_layer = tf.keras.layers.DenseFeatures(feature_columns)
 
 # The following variables are the hyperparameters.
@@ -173,7 +167,6 @@ batch_size = 1000
 
 # Specify the label
 label_name = "TargetClass"
-#label_name = "median_house_value"
 
 # Establish the model's topography.
 my_model = create_model_simple(learning_rate, my_feature_layer)
@@ -181,9 +174,15 @@ my_model = create_model_simple(learning_rate, my_feature_layer)
 # Train the model on the normalized training set. We're passing the entire
 # normalized training set, but the model will only use the features
 # defined by the feature_layer.
-epochs, mse = train_model_simple(my_model, train_df, epochs, batch_size, label_name)
+start = time.time()
+epochs, mse, acc = train_model_simple(my_model, train_df, epochs, batch_size, label_name)
+end = time.time()
+print("#########")
+print(end-start)
+print("#########")
 
-plot_the_loss_curve(epochs, mse)
+#plot_the_loss_curve(epochs, mse)
+plot_the_acc_curve(epochs, acc)
 
 # After building a model against the training set, test that model
 # against the test set.
@@ -201,9 +200,14 @@ my_model = create_model_deep(learning_rate, my_feature_layer)
 # Train the model on the normalized training set. We're passing the entire
 # normalized training set, but the model will only use the features
 # defined by the feature_layer.
+start = time.time()
 epochs, mse, acc = train_model_deep(my_model, train_df, epochs, 
                           label_name, batch_size)
-plot_the_loss_curve(epochs, mse)
+end = time.time()
+print("#########")
+print(end-start)
+print("#########")
+#plot_the_loss_curve(epochs, mse)
 plot_the_acc_curve(epochs, acc)
 
 # After building a model against the training set, test that model
