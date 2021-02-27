@@ -186,6 +186,7 @@ test_features = {name:np.array(value) for name, value in test_df.items()}
 test_label = np.array(test_features.pop(label_name)) # isolate the label
 print("\n Evaluate the new model against the test set:")
 my_model.evaluate(x = test_features, y = test_label, batch_size=batch_size)
+print(my_model.summary())
 
 epochs = 50
 batch_size = 1000
