@@ -2,14 +2,23 @@ import pandas as pd
 import numpy as np
 import json
 
+id_to_hero = dict()
+hero_to_id = dict()
+hero_attr = dict()
+
+def init(path_to_mapping, path_to_attributes):
+    global id_to_hero, hero_to_id, hero_attr
+    id_to_hero, hero_to_id = create_id_hero_mapping_from_file(path_to_mapping)
+    hero_attr = create_hero_attr_mapping_from_file(path_to_attributes)
+
 # this function performs the entire pipeline
-def preprocess_df(df, path_to_mapping, path_to_attributes):
-    id_to_hero = create_id_hero_mapping_from_file(path_to_mapping)
+def preprocess_df(df):
+    global id_to_hero, hero_attr
+
     df = insert_labels(df, id_to_hero)
     df = cull_dataframe(df)
 
-    df_attributes = pd.read_csv(path_to_attributes)
-    df = append_attributes(df, df_attributes)
+    df = append_attributes(df)
     df = convert_team2(df)
     return df
 
@@ -27,10 +36,21 @@ def create_id_hero_mapping_from_file(path):
         jsondict = json.load(f)
 
     id_name = dict()
+    name_id = dict()
+
     inner = jsondict["heroes"]
     for i in inner:
         id_name[i["id"]] = i["localized_name"]
-    return id_name
+        name_id[i["localized_name"]] = i["id"]
+    return id_name, name_id
+
+def create_hero_attr_mapping_from_file(path):
+    df_attributes = pd.read_csv(path)
+    name_attr = dict()
+
+    for index, row in df_attributes.iterrows():
+        name_attr[row["Hero Name"]] = row["Primary Stat"]
+    return name_attr
 
 def cull_dataframe(df):
     return pd.DataFrame(df.iloc[:, 0]).join(df.iloc[:, 4:])
@@ -48,10 +68,8 @@ def insert_labels(df, id_to_hero):
     del df["Unused"]
     return df
 
-def append_attributes(df_games, df_attributes):
-    name_to_attr = dict()
-    for index, row in df_attributes.iterrows():
-        name_to_attr[row["Hero Name"]] = row["Primary Stat"]
+def append_attributes(df_games):
+    global hero_attr
 
     df_attributes = pd.DataFrame(np.zeros((len(df_games.index), 3 * 2)))
 
@@ -67,7 +85,7 @@ def append_attributes(df_games, df_attributes):
         for col in row.iteritems():
             if col[1] == 0:
                 continue
-            attr = name_to_attr[col[0]]
+            attr = hero_attr[col[0]]
 
             if col[1] == 1:
                 if attr == "STR":
@@ -88,6 +106,6 @@ def append_attributes(df_games, df_attributes):
 
         df_attributes.iloc[index, :] = arr
 
-    df_attributes.columns = ["1 STR", "1 AGI", "1 INT", "-1 STR", "-1 AGI", "-1 INT"]
+    df_attributes.columns = ["1 STR", "1 AGI", "1 INT", "2 STR", "2 AGI", "2 INT"]
     
     return df_games.join(df_attributes)
